@@ -95,7 +95,7 @@ exports.createBooking= async (req,res,next)=>{
             }
             
         if (days > 3 || days < 0){
-            return res.status(500).json({success:false, message: `The duration is not in the range of 3 nights, please try again`});
+            return res.status(400).json({success:false, message: `The duration is not in the range of 3 nights, please try again`});
         }
 
         const bookPrice = await Room.find({type: req.body.room}, Hotel.pricepernight).distinct('pricepernight');
@@ -118,16 +118,16 @@ exports.createBooking= async (req,res,next)=>{
             percentdiscount = 0.80;
         }
 
-        req.body.totalPrice = bookPrice * percentdiscount;
         let codeDesc = await DiscountCode.find({code:req.body.discountCode}).distinct('description');
+        req.body.totalPrice = days * bookPrice * percentdiscount;
 
-        if(req.body.totalPrice==bookPrice){
-            //req.body.discountCode = null
+        if(percentdiscount == 1 && req.body.discountCode != null){
+            req.body.discountCode = null
             const booking = await Booking.create(req.body);
             res.status(201).json({
                 success:true,
                 data:booking,
-                message:`Your code might be ${codeDesc}invalid or expired. Then the total Price is ${req.body.totalPrice} Baht. discount Thank you! Please Check in after 2.00pm` 
+                message:`Your code might be invalid or expired. Then the total Price is ${req.body.totalPrice} Baht. discount Thank you! Please Check in after 2.00pm` 
             });
         } else {
             let codeDesc = await DiscountCode.find({code:req.body.discountCode}).distinct('description');
@@ -135,7 +135,7 @@ exports.createBooking= async (req,res,next)=>{
             res.status(201).json({
                 success:true,
                 data:booking,
-                message:`Already applied ${codeDesc} Total Price is ${req.body.totalPrice} Baht. discount Thank you! Please Check in after 2.00pm` 
+                message:`Already applied. Total Price is ${req.body.totalPrice} Baht. discount Thank you! Please Check in after 2.00pm` 
             });
         } 
         } catch (error) {
