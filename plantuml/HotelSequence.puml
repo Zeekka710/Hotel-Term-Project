@@ -1,0 +1,35 @@
+@startuml Hotel Booking (POST)
+
+header Hotel Booking Sequence Diagram
+footer Page %page% of %lastpage%
+title "Registered Create Booking (POST)"
+
+participant "Client" as client
+participant "<<javaScript>>\n:server" as server
+participant "<<router>>\n:booking" as routerBooking
+participant "<<controllers>>\n:booking" as controllersBooking
+participant "<<model>>\n:Hotel" as modelHotel
+database "<<MongoDB>>\n:hotels" as HotelsDatabase
+participant "<<model>>\n:Booking" as modelBooking
+database "<<MongoDB>>\n:hotels" as HotelsDatabase
+database "<<MongoDB>>\n:bookings" as BookingsDatabase
+
+client->server ++:req.post('/bookings')
+server->routerBooking ++:app.use('/bookings',bookings)
+routerBooking->controllersBooking ++:createBooking()
+controllersBooking->modelHotel ++:findById(req.params.hotelId)
+modelHotel->HotelsDatabase ++: HotelSchema
+HotelsDatabase --> modelHotel --: hotel
+modelHotel --> controllersBooking --: booking
+alt No specific hotel
+controllersBooking->client ++: "No hotel with the id of ${req.params.hotelId}"
+else CheckoutDate - CheckinDate > 3 && CheckoutDate - CheckinDate < 0
+controllersBooking->client ++: "The specific date is unavailable"
+else Successful booking
+controllersBooking->modelBooking ++: create(req.body)
+modelBooking ->BookingsDatabase ++: BookingSchema
+BookingsDatabase --> modelBooking --: booking
+controllersBooking <-- modelBooking --:booking
+controllersBooking->client --: response
+end
+@enduml

@@ -1,0 +1,28 @@
+@startuml Hotel Booking (Get)
+
+header Hotel Booking Sequence Diagram
+footer Page %page% of %lastpage%
+title "View Any Booking (Get)"
+
+participant "Client" as client
+participant "<<javaScript>>\n:server" as server
+participant "<<router>>\n:booking" as routerBooking
+participant "<<controllers>>\n:booking" as controllersBooking
+participant "<<model>>\n:Booking" as modelBooking
+database "<<MongoDB>>\n:bookings" as BookingsDatabase
+
+client->server ++:req.get('/bookings')
+server->routerBooking ++:app.use('/bookings',bookings)
+routerBooking->controllersBooking ++:getBookings()
+alt registered user
+controllersBooking->modelBooking ++: find({user: req.user.id})
+else admin view only one hotel
+controllersBooking->modelBooking ++: find({hospital: req.params.hotelId})
+else admin view all booking
+controllersBooking->modelBooking ++: find()
+end
+modelBooking ->BookingsDatabase ++: BookingSchema
+BookingsDatabase --> modelBooking --: bookings
+controllersBooking <-- modelBooking --:bookings
+controllersBooking->client --: response
+@enduml

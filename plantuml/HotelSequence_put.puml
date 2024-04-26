@@ -1,0 +1,32 @@
+@startuml Hotel Booking (PUT)
+
+header Hotel Booking Sequence Diagram
+footer Page %page% of %lastpage%
+title "Update Booking (PUT)"
+
+participant "Client" as client
+participant "<<javaScript>>\n:server" as server
+participant "<<router>>\n:booking" as routerBooking
+participant "<<controllers>>\n:booking" as controllersBooking
+participant "<<model>>\n:Booking" as modelBooking
+database "<<MongoDB>>\n:bookings" as BookingsDatabase
+
+client->server ++:req.put('/bookings')
+server->routerBooking ++:app.use('/bookings',bookings)
+routerBooking->controllersBooking ++:updateBooking()
+controllersBooking->modelBooking ++:findById(req.params.id)
+modelBooking->BookingsDatabase ++: BookingSchema
+BookingsDatabase-->modelBooking --: booking
+modelBooking-->controllersBooking --: booking
+alt Successful update booking
+controllersBooking->modelBooking ++: findByIdAndUpdate(req.params.id,req.body,{...})
+modelBooking ->BookingsDatabase ++: BookingSchema
+BookingsDatabase --> modelBooking --: booking
+controllersBooking <-- modelBooking --:booking
+controllersBooking->client ++: response
+else No specific booking
+controllersBooking->client ++: No booking with the id of ${req.params.id}
+else Unauthorized
+controllersBooking->client --: User ${req.user.id} is not authorized to update this booking
+end
+@enduml
